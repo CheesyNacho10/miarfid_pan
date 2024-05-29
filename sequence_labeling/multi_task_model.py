@@ -235,6 +235,8 @@ class TokenClassificationHead(nn.Module):
         custom_top = self._create_custom_top_module(hidden_size, num_labels)
         if custom_top is not None:
             self.classifier = custom_top
+        else:
+            self.classifier = nn.Linear(hidden_size, num_labels)
         self.num_labels = num_labels
 
         self._init_weights()
