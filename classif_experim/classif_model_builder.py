@@ -1,9 +1,11 @@
 import logging, os
 from copy import copy
 
-from classif_experim.classif_experiment_runner import HF_CORE_HPARAMS, MAX_SEQ_LENGTH, build_transformer_model
+from classif_experim.classif_experiment_runner import MAX_SEQ_LENGTH, build_transformer_model, load_config_yml
 from classif_experim.hf_skelarn_wrapper import SklearnTransformerClassif
 from data_tools.dataset_loaders import load_dataset_classification
+
+HF_CORE_HPARAMS = {}
 
 def create_finetune_hparams(
         lang: str
@@ -17,8 +19,10 @@ def create_finetune_hparams(
     Returns:
         dict: Dictionary of hyperparameters.
     """
+    yaml_config = load_config_yml(os.path.join(os.path.dirname(__file__), 'experiments/evaluate.yml'))
 
-    params = copy(HF_CORE_HPARAMS)
+    # params = copy(HF_CORE_HPARAMS)
+    params = copy(yaml_config['hf_core_hparams'])
     params['lang'] = lang
     params['eval'] = None
     params['max_seq_length'] = MAX_SEQ_LENGTH
@@ -75,7 +79,7 @@ def load_or_build_classif_fulltrain_model(
     else:
         print(f'No model found at {mfolder}. Building model.')
         build_classif_model_on_full_train(lang, model_name, model_label, rseed=rseed, positive_class=positive_class, save=True)
-        return SklearnTransformerClassif.load(mfolder)
+        return SklearnTransformerClassif.load(model_path)
 
 def build_classif_model_on_full_train(
         lang: str, 
@@ -100,11 +104,12 @@ def build_classif_model_on_full_train(
         SklearnTransformerClassif: Trained model.
     """
 
-    txt_tr, cls_tr, _ = load_dataset_classification(lang, string_labels=False, positive_class=positive_class)
+    txt_tr, cls_tr, _ = load_dataset_classification(lang, string_labels=False, positive_class=positive_class, src_langs=[[],[]])
     params = create_finetune_hparams(lang)
     #params['num_train_epochs'] = 0.5 # for testing
     try_batch_size = params['batch_size']
     mfolder = get_model_folder_name(lang, model_label, rseed, positive_class)
+    model_path = os.path.join(os.path.dirname(__file__), mfolder)
     grad_accum_steps = 1
     while try_batch_size >= 1:
         try:
@@ -112,7 +117,7 @@ def build_classif_model_on_full_train(
             params['gradient_accumulation_steps'] = grad_accum_steps
             model = build_transformer_model(model_name, params, rnd_seed=rseed)
             model.fit(txt_tr, cls_tr)
-            if save: model.save(mfolder)
+            if save: model.save(model_path)
             return model
         except RuntimeError as e:
             if 'out of memory' in str(e).lower():
@@ -128,4 +133,4 @@ def build_classif_model_on_full_train(
     return None
 
 if __name__ == '__main__':
-    build_classif_model_on_full_train('en', 'bert-base-cased', model_label='bert', test=True)
+    build_classif_model_on_full_train('en', 'jy46604790/Fake-News-Bert-Detect', model_label='fake-news-bert')

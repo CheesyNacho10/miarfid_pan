@@ -1,18 +1,5 @@
-experim_label: ex4_final
+experim_label: evaluate
 
-langs:
-  - en
-  - es
-
-src_langs:
-  - - []
-  - - []
-
-model_list:
-  en:
-    - jy46604790/Fake-News-Bert-Detect
-  es:
-    - PlanTL-GOB-ES/roberta-base-bne
 
 hf_core_hparams:
   learning_rate: 0.00002
@@ -23,11 +10,11 @@ hf_core_hparams:
   fc_up_layers: 2
   fc_down_layers: 2
 
-  eval: 0.1
+  # eval: 0.1
   # Choose between f1_macro, f1, f1_neg, acc, precision, recall, mcc or null (for epoch stop strategy)
-  eval_metric: mcc
-  rel_stop_threshold: 0.01
-  stop_patience: 10
+  # eval_metric: mcc
+  # rel_stop_threshold: 0.01
+  # stop_patience: 10
 
   # For epoch stop strategy (if selected)
-  num_train_epochs: 3
+  num_train_epochs: 10
